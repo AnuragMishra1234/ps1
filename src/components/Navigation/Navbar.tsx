@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Anchor, Play, Menu, X, Radio } from 'lucide-react';
+import { Anchor, Play, Menu, X, Maximize2 } from 'lucide-react';
 
 interface NavbarProps {
   onLaunchDemo: () => void;
+  onOpenFullPage3D?: () => void;
 }
 
-export function Navbar({ onLaunchDemo }: NavbarProps) {
+export function Navbar({ onLaunchDemo, onOpenFullPage3D }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
@@ -52,8 +53,19 @@ export function Navbar({ onLaunchDemo }: NavbarProps) {
           ))}
         </nav>
 
-        {/* Right CTA Button */}
-        <div className="hidden sm:flex items-center gap-3">
+        {/* Right CTA Buttons */}
+        <div className="hidden sm:flex items-center gap-2.5">
+          {onOpenFullPage3D && (
+            <button
+              onClick={onOpenFullPage3D}
+              className="px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-cyan-300 hover:text-white border border-cyan-800/80 font-mono text-xs font-bold flex items-center gap-1.5 shadow-md transition active:scale-95"
+              title="Open full page 3D interactive viewer with all telemetry details"
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
+              <span>3D VIEW</span>
+            </button>
+          )}
+
           <button
             onClick={onLaunchDemo}
             className="px-3.5 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-mono text-xs font-bold flex items-center gap-1.5 shadow-md shadow-cyan-950 transition active:scale-95"
@@ -86,16 +98,30 @@ export function Navbar({ onLaunchDemo }: NavbarProps) {
               {link.label}
             </a>
           ))}
-          <button
-            onClick={() => {
-              setMobileMenuOpen(false);
-              onLaunchDemo();
-            }}
-            className="w-full mt-2 py-2 rounded-lg bg-cyan-500 text-slate-950 font-bold flex items-center justify-center gap-2"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>LAUNCH DEMO</span>
-          </button>
+          <div className="flex gap-2 pt-2">
+            {onOpenFullPage3D && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenFullPage3D();
+                }}
+                className="flex-1 py-2 rounded-lg bg-slate-800 text-cyan-300 font-bold flex items-center justify-center gap-1.5 border border-cyan-800"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>3D VIEW</span>
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onLaunchDemo();
+              }}
+              className="flex-1 py-2 rounded-lg bg-cyan-500 text-slate-950 font-bold flex items-center justify-center gap-1.5"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>LAUNCH DEMO</span>
+            </button>
+          </div>
         </div>
       )}
     </header>

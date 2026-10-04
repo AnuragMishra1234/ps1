@@ -12,34 +12,38 @@ interface CameraRigProps {
 export function CameraRig({ viewMode, targetPosition }: CameraRigProps) {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null!);
-  const desiredCamPos = useRef(new THREE.Vector3(3.2, 1.6, 4.0));
-  const desiredLookAt = useRef(new THREE.Vector3(...targetPosition));
+  const desiredCamPos = useRef(new THREE.Vector3(3.6, 1.4, 4.6));
+  const desiredLookAt = useRef(new THREE.Vector3(targetPosition[0], targetPosition[1] - 0.15, targetPosition[2]));
   const isTransitioning = useRef(false);
 
   useEffect(() => {
     isTransitioning.current = true;
     switch (viewMode) {
       case 'orbit':
-        desiredCamPos.current.set(3.2, 1.6, 4.0);
-        desiredLookAt.current.set(targetPosition[0], targetPosition[1], targetPosition[2]);
+        // Centered general view
+        desiredCamPos.current.set(3.6, 1.4, 4.6);
+        desiredLookAt.current.set(targetPosition[0], targetPosition[1] - 0.15, targetPosition[2]);
         break;
       case 'top':
-        desiredCamPos.current.set(0.01, 7.8, 0.01);
-        desiredLookAt.current.set(targetPosition[0], targetPosition[1], targetPosition[2]);
+        // Overhead bathymetry view
+        desiredCamPos.current.set(0.01, 8.2, 0.01);
+        desiredLookAt.current.set(targetPosition[0], targetPosition[1] - 0.1, targetPosition[2]);
         break;
       case 'seafloor':
-        desiredCamPos.current.set(2.4, -2.4, 3.2);
-        desiredLookAt.current.set(targetPosition[0], targetPosition[1] + 0.2, targetPosition[2]);
+        // Looking up from seafloor - positioned so pod remains nicely centered in the frame!
+        desiredCamPos.current.set(2.8, -1.8, 3.8);
+        desiredLookAt.current.set(targetPosition[0], targetPosition[1] - 0.25, targetPosition[2]);
         break;
       case 'follow':
-        desiredCamPos.current.set(1.4, 0.6, 1.9);
-        desiredLookAt.current.set(targetPosition[0], targetPosition[1], targetPosition[2]);
+        // Close follow inspection
+        desiredCamPos.current.set(2.0, 0.6, 2.6);
+        desiredLookAt.current.set(targetPosition[0], targetPosition[1] - 0.1, targetPosition[2]);
         break;
     }
   }, [viewMode, targetPosition]);
 
   useFrame((_, delta) => {
-    // Only animate programmatically if a view button was just clicked
+    // Only animate programmatically if a viewpoint button was clicked
     if (!isTransitioning.current) return;
 
     camera.position.lerp(desiredCamPos.current, delta * 3.5);
@@ -49,7 +53,7 @@ export function CameraRig({ viewMode, targetPosition }: CameraRigProps) {
     }
 
     // Stop transitioning as soon as camera is close enough to target
-    if (camera.position.distanceTo(desiredCamPos.current) < 0.1) {
+    if (camera.position.distanceTo(desiredCamPos.current) < 0.12) {
       isTransitioning.current = false;
     }
   });
@@ -64,7 +68,7 @@ export function CameraRig({ viewMode, targetPosition }: CameraRigProps) {
       zoomSpeed={1.0}
       panSpeed={0.8}
       minDistance={0.8}
-      maxDistance={30}
+      maxDistance={32}
       maxPolarAngle={Math.PI / 2 + 0.3} // Allows looking slightly upwards from seafloor
       onStart={() => {
         // Immediately yield 100% control to user mouse interaction!

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useSensorData } from './hooks/useSensorData';
 import { useSimulation } from './hooks/useSimulation';
 import { Navbar } from './components/Navigation/Navbar';
@@ -22,6 +22,9 @@ import { SensorId } from './types/sensors';
 
 export function App() {
   const simulationSectionRef = useRef<HTMLDivElement>(null!);
+
+  // Full-page 3D viewer mode state
+  const [isFullPage3D, setIsFullPage3D] = useState(false);
 
   // Sensor telemetry hook
   const {
@@ -54,6 +57,15 @@ export function App() {
     skipNext,
     skipToStage,
   } = useSimulation(setSimulationZone, setCameraView);
+
+  // Lock body scroll when full-page 3D mode is open
+  useEffect(() => {
+    if (isFullPage3D) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+  }, [isFullPage3D]);
 
   // Cycle anomaly simulation zones on click
   const handleSimulateAnomaly = useCallback(() => {
@@ -91,10 +103,46 @@ export function App() {
     }
   }, []);
 
+  // TRUE FULL-PAGE 3D VIEW: 100% of the screen is pure 3D digital twin without landing headers
+  if (isFullPage3D) {
+    return (
+      <div className="fixed inset-0 z-[99999] w-screen h-screen bg-[#040812] overflow-hidden select-none">
+        <Interactive3DViewer
+          cameraView={cameraView}
+          onCameraViewChange={setCameraView}
+          anomalyLevel={evaluation.level}
+          selectedSensorId={selectedSensorId}
+          onSelectSensor={(id) => setSelectedSensorId(id as SensorId)}
+          depthM={readings.depthM}
+          altitudeM={readings.altitudeM}
+          headingDeg={readings.headingDeg}
+          isFullPage={true}
+          onToggleFullPage={() => setIsFullPage3D(false)}
+          readings={readings}
+          evaluation={evaluation}
+          currentZone={currentZone}
+          onSelectZone={setSimulationZone}
+          onStartDemo={startDemo}
+          onSimulateAnomaly={handleSimulateAnomaly}
+          isDemoRunning={isDemoRunning}
+        />
+
+        {/* Modal: Sensor Detailed Inspector if clicked inside full 3d view */}
+        <SensorDetailModal
+          sensorId={selectedSensorId}
+          onClose={() => setSelectedSensorId(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#060b14] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
       {/* 1. TOP STICKY NAVIGATION */}
-      <Navbar onLaunchDemo={handleLaunchDemoFromHero} />
+      <Navbar
+        onLaunchDemo={handleLaunchDemoFromHero}
+        onOpenFullPage3D={() => setIsFullPage3D(true)}
+      />
 
       {/* 2. DEMO PLAYBACK CONTROLLER (Sticky right below navbar) */}
       <DemoPlaybackBar
@@ -135,7 +183,7 @@ export function App() {
           className="max-w-7xl mx-auto px-4 pt-8"
         >
           {/* Section Header */}
-          <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800 text-cyan-400 text-xs font-mono uppercase tracking-widest mb-2">
                 CORE PROTOTYPE DIGITAL TWIN
@@ -157,7 +205,7 @@ export function App() {
             </div>
           </div>
 
-          {/* 3D Canvas Viewer */}
+          {/* 3D Canvas Viewer (Supports both Screen-Fit embedded and Full-Page 3D mode) */}
           <Interactive3DViewer
             cameraView={cameraView}
             onCameraViewChange={setCameraView}
@@ -167,6 +215,15 @@ export function App() {
             depthM={readings.depthM}
             altitudeM={readings.altitudeM}
             headingDeg={readings.headingDeg}
+            isFullPage={isFullPage3D}
+            onToggleFullPage={() => setIsFullPage3D((prev) => !prev)}
+            readings={readings}
+            evaluation={evaluation}
+            currentZone={currentZone}
+            onSelectZone={setSimulationZone}
+            onStartDemo={startDemo}
+            onSimulateAnomaly={handleSimulateAnomaly}
+            isDemoRunning={isDemoRunning}
           />
 
           {/* LIVE SENSOR DATA PANEL directly underneath 3D simulation */}
